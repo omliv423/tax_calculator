@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { navigateTo } from '@/lib/navigate'
+import { registerPushSubscription, clearBadge } from '@/lib/push'
 
 const IMAGE_EXPIRE_SECONDS = 86400 // 24時間
 
@@ -25,6 +26,8 @@ export default function ChatPage() {
       if (!session) { navigateTo(router, '/auth'); return }
       setSession(session)
       fetchFriends(session.user.id)
+      registerPushSubscription(session.user.id)
+      clearBadge()
     })
   }, [])
 
@@ -82,6 +85,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!selectedFriend || !session) return
     fetchMessages(selectedFriend.id)
+    clearBadge()
     const userId = session.user.id
     const friendId = selectedFriend.id
 
@@ -149,6 +153,7 @@ export default function ChatPage() {
     } else if (newMsg) {
       setMessages((prev) => [...prev, newMsg])
       supabase.from('last_activity').update({ updated_at: new Date().toISOString() }).eq('id', 1)
+      fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ receiver_id: selectedFriend.id }) })
     }
 
     setUploading(false)
@@ -168,6 +173,7 @@ export default function ChatPage() {
     } else if (newMsg) {
       setMessages((prev) => [...prev, newMsg])
       supabase.from('last_activity').update({ updated_at: new Date().toISOString() }).eq('id', 1)
+      fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ receiver_id: selectedFriend.id }) })
     }
     setText('')
   }
