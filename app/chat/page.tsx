@@ -210,7 +210,7 @@ export default function ChatPage() {
   // トーク一覧
   if (!selectedFriend) {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col">
+      <main className="h-full bg-gray-50 flex flex-col overflow-y-auto">
         <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">トーク</h2>
           <div className="flex items-center gap-2">

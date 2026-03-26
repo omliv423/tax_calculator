@@ -46,7 +46,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <main className="h-full bg-gray-50 flex flex-col items-center justify-center p-6 overflow-y-auto">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm p-6 space-y-4">
         <h2 className="text-lg font-bold text-gray-800 text-center">
           {isSignUp ? 'アカウント作成' : 'ログイン'}

@@ -35,7 +35,7 @@ export default function PinPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <main className="h-full bg-gray-50 flex flex-col items-center justify-center p-6 overflow-y-auto">
       <div className="mb-8 text-center">
         <h2 className="text-lg font-bold text-gray-800">PINを入力</h2>
         <p className="text-sm text-gray-400 mt-1">4桁のコードを入力してください</p>
