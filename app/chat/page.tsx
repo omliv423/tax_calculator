@@ -306,7 +306,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="bg-white px-3 py-3 pb-[env(safe-area-inset-bottom,12px)] border-t border-gray-100 flex-shrink-0">
+      <div className="bg-white px-3 py-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-gray-100 flex-shrink-0">
         {error && (
           <p className="text-red-400 text-xs mb-2 text-center">{error}</p>
         )}
