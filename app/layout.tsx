@@ -31,10 +31,12 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if (window.location.pathname !== '/' && !sessionStorage.getItem('navigating')) {
-                window.location.replace('/');
+              if (window.location.pathname !== '/') {
+                var t = Number(sessionStorage.getItem('nav_time') || 0);
+                if (Date.now() - t > 3000) {
+                  window.location.replace('/');
+                }
               }
-              sessionStorage.removeItem('navigating');
             `,
           }}
         />
