@@ -24,7 +24,7 @@ export async function registerPushSubscription(userId: string) {
     if (permission !== 'granted') return
 
     const subscription = await registration.pushManager.subscribe({
-      userVisuallyShown: true,
+      userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
     })
 
