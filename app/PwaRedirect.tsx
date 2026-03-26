@@ -1,21 +1,26 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-
-let hasLaunched = false
+import { usePathname } from 'next/navigation'
 
 export default function PwaRedirect() {
-  const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!hasLaunched) {
-      hasLaunched = true
-      if (pathname !== '/') {
-        router.replace('/')
+    // 初回ロード時：計算ページ以外なら強制リダイレクト
+    if (pathname !== '/') {
+      window.location.replace('/')
+      return
+    }
+
+    // PWAがbfcacheから復元された場合も計算ページに戻す
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && window.location.pathname !== '/') {
+        window.location.replace('/')
       }
     }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
   }, [])
 
   return null
