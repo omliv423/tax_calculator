@@ -23,6 +23,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
     setLoading(true)
     setError('')
 
@@ -90,7 +91,7 @@ export default function AuthPage() {
 
         <button
           onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-          className="w-full text-sm text-gray-400 text-center"
+          className="w-full text-sm text-blue-500 text-center"
         >
           {isSignUp ? 'ログインはこちら' : 'アカウントを作成する'}
         </button>

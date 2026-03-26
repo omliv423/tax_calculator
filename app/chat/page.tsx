@@ -29,6 +29,15 @@ export default function ChatPage() {
       registerPushSubscription(session.user.id)
       clearBadge()
     })
+
+    // フレンド追加画面から戻った時にリストを再取得
+    const handleFocus = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) fetchFriends(session.user.id)
+      })
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   const containerRef = useRef<HTMLDivElement>(null)
@@ -176,6 +185,7 @@ export default function ChatPage() {
       fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ receiver_id: selectedFriend.id }) })
     }
     setText('')
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   }
 
   const isExpired = (msg: any) => msg.expires_at && new Date(msg.expires_at) < new Date()

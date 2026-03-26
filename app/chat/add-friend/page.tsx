@@ -21,6 +21,7 @@ export default function AddFriendPage() {
   }, [])
 
   const searchUser = async () => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
     setLoading(true)
     setMessage('')
     setResult(null)
