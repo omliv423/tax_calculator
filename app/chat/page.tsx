@@ -270,7 +270,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="bg-white px-3 py-2 border-t border-gray-100 flex-shrink-0">
+      <div className="bg-white px-3 py-3 pb-[env(safe-area-inset-bottom,12px)] border-t border-gray-100 flex-shrink-0">
         {error && (
           <p className="text-red-400 text-xs mb-2 text-center">{error}</p>
         )}
@@ -325,7 +325,7 @@ export default function ChatPage() {
             }}
             placeholder="メッセージを入力"
             rows={1}
-            className="flex-1 border border-gray-200 rounded-2xl px-4 py-2 text-sm focus:outline-none focus:border-gray-400 resize-none max-h-24"
+            className="flex-1 border border-gray-200 rounded-2xl px-4 py-2 text-base focus:outline-none focus:border-gray-400 resize-none max-h-24"
           />
           <button
             onClick={handleSendText}
