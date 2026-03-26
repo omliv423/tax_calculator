@@ -179,8 +179,8 @@ export default function Home() {
       </div>
 
       {result && (
-        <div ref={resultRef}></div>
         <>
+          <div ref={resultRef} />
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2 mb-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">年収</span>
@@ -219,7 +219,6 @@ export default function Home() {
           <p className="text-xs text-gray-400 mt-3 px-1 leading-relaxed">
             ※独身・扶養なし・40歳未満の概算です。社会保険料上限・復興特別所得税を反映。
           </p>
-        </div>
         </>
       )}
     </main>
