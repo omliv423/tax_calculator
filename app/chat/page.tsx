@@ -27,11 +27,36 @@ export default function ChatPage() {
     })
   }, [])
 
-  const inputAreaRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // iOS キーボード対応: visualViewportの高さをCSS変数に反映
+  useEffect(() => {
+    if (!selectedFriend) return
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const update = () => {
+      requestAnimationFrame(() => {
+        if (containerRef.current) {
+          containerRef.current.style.height = `${vv.height}px`
+          containerRef.current.style.transform = `translateY(${vv.offsetTop}px)`
+        }
+      })
+    }
+
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
+
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [selectedFriend])
 
   // 期限切れ画像の自動更新タイマー
   useEffect(() => {
@@ -232,7 +257,7 @@ export default function ChatPage() {
 
   // チャット画面
   return (
-    <main className="flex flex-col bg-gray-50 min-h-screen">
+    <main ref={containerRef} className="flex flex-col bg-gray-50 overflow-hidden" style={{ height: '100%', position: 'relative' }}>
       <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => setSelectedFriend(null)}
@@ -276,7 +301,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div ref={inputAreaRef} className="bg-white px-3 py-3 pb-[env(safe-area-inset-bottom,12px)] border-t border-gray-100 sticky bottom-0">
+      <div className="bg-white px-3 py-3 pb-[env(safe-area-inset-bottom,12px)] border-t border-gray-100 flex-shrink-0">
         {error && (
           <p className="text-red-400 text-xs mb-2 text-center">{error}</p>
         )}
@@ -323,11 +348,6 @@ export default function ChatPage() {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            onFocus={() => {
-              setTimeout(() => {
-                inputAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-              }, 300)
-            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()

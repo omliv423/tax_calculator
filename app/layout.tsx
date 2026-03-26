@@ -33,7 +33,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      style={{ height: '100%' }}
     >
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -62,7 +63,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="h-full overflow-hidden">
         {children}
       </body>
     </html>

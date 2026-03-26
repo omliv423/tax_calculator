@@ -153,7 +153,7 @@ export default function Home() {
   const fmt = (n: number) => n.toLocaleString('ja-JP')
 
   return (
-    <main className="min-h-screen bg-gray-50 pt-4 pb-6 px-4">
+    <main className="min-h-screen bg-gray-50 pt-4 pb-6 px-4 overflow-y-auto h-full">
       <div className="mb-4">
         <h1 className="text-lg font-bold text-gray-800">年収手取りシミュレーター</h1>
         <p className="text-xs text-gray-400 mt-0.5">最終更新：{lastUpdated ?? '取得中...'}</p>
