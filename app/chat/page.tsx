@@ -148,6 +148,7 @@ export default function ChatPage() {
       setError('メッセージの保存に失敗しました')
     } else if (newMsg) {
       setMessages((prev) => [...prev, newMsg])
+      supabase.from('last_activity').update({ updated_at: new Date().toISOString() }).eq('id', 1)
     }
 
     setUploading(false)
@@ -166,6 +167,7 @@ export default function ChatPage() {
       setError('メッセージの送信に失敗しました')
     } else if (newMsg) {
       setMessages((prev) => [...prev, newMsg])
+      supabase.from('last_activity').update({ updated_at: new Date().toISOString() }).eq('id', 1)
     }
     setText('')
   }
