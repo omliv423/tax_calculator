@@ -1,37 +1,38 @@
 self.addEventListener('push', function (event) {
   const data = event.data ? event.data.json() : {}
 
-  event.waitUntil(
-    self.registration.showNotification(data.title || '税金計算をしませんか？', {
-      body: data.body || '最新の税制情報で手取りをチェック',
-      tag: 'tax-calc-update',
-      renotify: false,
-      silent: true,
-    })
-  )
+  const showNotif = self.registration.showNotification(data.title || '税金計算をしませんか？', {
+    body: data.body || '最新の税制情報で手取りをチェック',
+    tag: 'tax-calc-update',
+    renotify: false,
+    silent: true,
+    badge: '/icon-192.png',
+  })
 
-  // バッジを付ける
-  if (navigator.setAppBadge) {
-    navigator.setAppBadge()
-  }
+  const setBadge = self.navigator && self.navigator.setAppBadge
+    ? self.navigator.setAppBadge(1)
+    : Promise.resolve()
+
+  event.waitUntil(Promise.all([showNotif, setBadge]))
 })
 
 self.addEventListener('notificationclick', function (event) {
   event.notification.close()
 
-  // バッジを消す
-  if (navigator.clearAppBadge) {
-    navigator.clearAppBadge()
-  }
+  const clearBadge = self.navigator && self.navigator.clearAppBadge
+    ? self.navigator.clearAppBadge()
+    : Promise.resolve()
 
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(function (clientList) {
-      for (const client of clientList) {
-        if (client.url.includes('/chat') && 'focus' in client) {
-          return client.focus()
+    clearBadge.then(function () {
+      return clients.matchAll({ type: 'window' }).then(function (clientList) {
+        for (const client of clientList) {
+          if (client.url.includes('/chat') && 'focus' in client) {
+            return client.focus()
+          }
         }
-      }
-      return clients.openWindow('/chat')
+        return clients.openWindow('/chat')
+      })
     })
   )
 })
