@@ -183,7 +183,7 @@ export default function ChatPage() {
   if (!selectedFriend) {
     return (
       <main className="h-full bg-gray-50 flex flex-col overflow-y-auto">
-        <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100">
+        <div className="bg-white px-4 pt-[env(safe-area-inset-top,16px)] pb-4 flex justify-between items-center border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">トーク</h2>
           <div className="flex items-center gap-2">
             <button
@@ -230,7 +230,7 @@ export default function ChatPage() {
   // チャット画面
   return (
     <main ref={containerRef} className="flex flex-col bg-gray-50 overflow-hidden" style={{ height: '100%', position: 'relative' }}>
-      <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
+      <div className="bg-white px-4 pt-[env(safe-area-inset-top,12px)] pb-3 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => setSelectedFriend(null)}
           className="text-gray-400 text-xl w-8"
