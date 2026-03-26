@@ -49,12 +49,19 @@ export default function RootLayout({
                   var t = Number(sessionStorage.getItem('nav_time') || 0);
                   return Date.now() - t > 3000;
                 }
-                if (shouldRedirect()) window.location.replace('/');
+                if (shouldRedirect()) {
+                  document.documentElement.style.visibility = 'hidden';
+                  window.location.replace('/');
+                }
                 window.addEventListener('pageshow', function(e) {
-                  if (e.persisted && shouldRedirect()) window.location.replace('/');
+                  if (e.persisted && shouldRedirect()) {
+                    document.documentElement.style.visibility = 'hidden';
+                    window.location.replace('/');
+                  }
                 });
                 document.addEventListener('visibilitychange', function() {
                   if (document.visibilityState === 'visible' && shouldRedirect()) {
+                    document.documentElement.style.visibility = 'hidden';
                     window.location.replace('/');
                   }
                 });
@@ -63,7 +70,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="h-full overflow-hidden">
+      <body className="h-full overflow-hidden" style={{ backgroundColor: '#f9fafb' }}>
         {children}
       </body>
     </html>
