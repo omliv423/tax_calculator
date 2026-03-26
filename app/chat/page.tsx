@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { navigateTo } from '@/lib/navigate'
 
-const IMAGE_EXPIRE_SECONDS = 10
+const IMAGE_EXPIRE_SECONDS = 30
 
 export default function ChatPage() {
   const [session, setSession] = useState<any>(null)
@@ -13,6 +13,7 @@ export default function ChatPage() {
   const [selectedFriend, setSelectedFriend] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -27,6 +28,34 @@ export default function ChatPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  // 期限切れ画像の自動更新タイマー
+  useEffect(() => {
+    if (messages.length === 0) return
+    const activeMessages = messages.filter(m => !isExpired(m))
+    if (activeMessages.length === 0) return
+
+    const nextExpiry = Math.min(
+      ...activeMessages.map(m => new Date(m.expires_at).getTime() - Date.now())
+    )
+    if (nextExpiry <= 0) {
+      setMessages(prev => [...prev])
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setMessages(prev => [...prev]) // 再レンダーで期限切れ判定を更新
+
+      // 期限切れ画像をStorageから削除
+      messages.forEach(async (msg) => {
+        if (isExpired(msg) && msg.storage_path) {
+          await supabase.storage.from('chat-images').remove([msg.storage_path])
+        }
+      })
+    }, nextExpiry + 100)
+
+    return () => clearTimeout(timer)
   }, [messages])
 
   const fetchFriends = async (userId: string) => {
@@ -52,15 +81,21 @@ export default function ChatPage() {
   useEffect(() => {
     if (!selectedFriend || !session) return
     fetchMessages(selectedFriend.id)
+    const userId = session.user.id
+    const friendId = selectedFriend.id
 
     const channel = supabase
-      .channel('messages')
+      .channel(`messages-${userId}-${friendId}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
+        filter: `receiver_id=eq.${userId}`,
       }, (payload) => {
-        setMessages((prev) => [...prev, payload.new])
+        const msg = payload.new as any
+        if (msg.sender_id === friendId) {
+          setMessages((prev) => [...prev, msg])
+        }
         supabase.from('last_activity').update({ updated_at: new Date().toISOString() }).eq('id', 1)
       })
       .subscribe()
@@ -72,38 +107,64 @@ export default function ChatPage() {
     const file = e.target.files?.[0]
     if (!file || !selectedFriend) return
     setUploading(true)
+    setError('')
 
-    const filename = `${Date.now()}_${file.name}`
-    const { error } = await supabase.storage
+    const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const { error: uploadError } = await supabase.storage
       .from('chat-images')
       .upload(filename, file)
 
-    if (error) { setUploading(false); return }
+    if (uploadError) {
+      setError('画像の送信に失敗しました')
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
 
-    const { data: { publicUrl } } = supabase.storage
+    // Signed URLを生成（有効期限 = 画像表示期限）
+    const { data: signedData, error: signError } = await supabase.storage
       .from('chat-images')
-      .getPublicUrl(filename)
+      .createSignedUrl(filename, IMAGE_EXPIRE_SECONDS)
+
+    if (signError || !signedData) {
+      setError('URLの生成に失敗しました')
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
 
     const expiresAt = new Date(Date.now() + IMAGE_EXPIRE_SECONDS * 1000).toISOString()
 
-    await supabase.from('messages').insert({
+    const { error: insertError } = await supabase.from('messages').insert({
       sender_id: session.user.id,
       receiver_id: selectedFriend.id,
-      image_url: publicUrl,
+      image_url: signedData.signedUrl,
+      storage_path: filename,
       expires_at: expiresAt,
     })
 
+    if (insertError) {
+      setError('メッセージの保存に失敗しました')
+    }
+
     setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   const isExpired = (msg: any) => new Date(msg.expires_at) < new Date()
   const isMine = (msg: any) => msg.sender_id === session?.user.id
 
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
   // トーク一覧
   if (!selectedFriend) {
     return (
       <main className="min-h-screen bg-gray-50 flex flex-col">
-        {/* ヘッダー */}
         <div className="bg-white px-4 py-4 flex justify-between items-center border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">トーク</h2>
           <div className="flex items-center gap-2">
@@ -111,7 +172,7 @@ export default function ChatPage() {
               onClick={() => navigateTo(router, '/chat/add-friend')}
               className="text-sm text-gray-500 border border-gray-200 rounded-full px-3 py-1"
             >
-              ＋ 追加
+              + 追加
             </button>
             <button
               onClick={() => supabase.auth.signOut().then(() => navigateTo(router, '/auth'))}
@@ -122,7 +183,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* フレンド一覧 */}
         <div className="flex-1">
           {friends.length === 0 ? (
             <div className="flex items-center justify-center h-40">
@@ -152,7 +212,6 @@ export default function ChatPage() {
   // チャット画面
   return (
     <main className="h-screen bg-gray-50 flex flex-col">
-      {/* ヘッダー */}
       <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => setSelectedFriend(null)}
@@ -166,12 +225,11 @@ export default function ChatPage() {
         <span className="font-medium text-gray-900">{selectedFriend.username}</span>
       </div>
 
-      {/* メッセージ一覧 */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${isMine(msg) ? 'justify-end' : 'justify-start'}`}>
+          <div key={msg.id} className={`flex flex-col ${isMine(msg) ? 'items-end' : 'items-start'}`}>
             {isExpired(msg) ? (
-              <div className={`rounded-2xl px-4 py-2 text-xs text-gray-400 bg-gray-200`}>
+              <div className="rounded-2xl px-4 py-2 text-xs text-gray-400 bg-gray-200">
                 画像の表示期限が切れました
               </div>
             ) : (
@@ -181,27 +239,52 @@ export default function ChatPage() {
                 className="max-w-[70vw] max-h-72 rounded-2xl object-cover shadow-sm"
               />
             )}
+            <span className="text-xs text-gray-400 mt-1 px-1">
+              {formatTime(msg.created_at)}
+            </span>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {/* 送信エリア */}
       <div className="bg-white px-4 py-3 border-t border-gray-100 flex-shrink-0">
+        {error && (
+          <p className="text-red-400 text-xs mb-2 text-center">{error}</p>
+        )}
         <input
           type="file"
           accept="image/*"
+          capture="environment"
           ref={fileRef}
           onChange={handleImageUpload}
           className="hidden"
         />
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="w-full bg-gray-900 text-white rounded-2xl py-3 font-medium active:opacity-70 disabled:opacity-40 text-sm"
-        >
-          {uploading ? '送信中...' : '📷  画像を送る'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (fileRef.current) {
+                fileRef.current.removeAttribute('capture')
+                fileRef.current.click()
+              }
+            }}
+            disabled={uploading}
+            className="flex-1 bg-gray-900 text-white rounded-2xl py-3 font-medium active:opacity-70 disabled:opacity-40 text-sm"
+          >
+            {uploading ? '送信中...' : '画像を選ぶ'}
+          </button>
+          <button
+            onClick={() => {
+              if (fileRef.current) {
+                fileRef.current.setAttribute('capture', 'environment')
+                fileRef.current.click()
+              }
+            }}
+            disabled={uploading}
+            className="bg-gray-900 text-white rounded-2xl px-4 py-3 font-medium active:opacity-70 disabled:opacity-40 text-sm"
+          >
+            撮影
+          </button>
+        </div>
       </div>
     </main>
   )
