@@ -20,17 +20,27 @@ export async function registerPushSubscription(userId: string) {
     const registration = await navigator.serviceWorker.register('/sw.js')
     await navigator.serviceWorker.ready
 
-    const permission = await Notification.requestPermission()
+    // 許可を確認（既に granted なら再度ダイアログは出ない）
+    let permission = Notification.permission
+    if (permission === 'default') {
+      permission = await Notification.requestPermission()
+    }
     if (permission !== 'granted') return
 
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    })
+    // 既存の購読を取得、なければ新規作成
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      })
+    }
 
+    // DBに保存
+    const subJson = subscription.toJSON()
     await supabase.from('push_subscriptions').upsert({
       user_id: userId,
-      subscription: subscription.toJSON(),
+      subscription: subJson,
     }, { onConflict: 'user_id,subscription' })
   } catch (e) {
     console.error('Push registration failed:', e)
