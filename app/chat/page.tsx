@@ -61,7 +61,7 @@ export default function ChatPage() {
   const fetchFriends = async (userId: string) => {
     const { data } = await supabase
       .from('friendships')
-      .select('friend_id, profiles!friendships_friend_id_fkey(id, username)')
+      .select('friend_id, profiles!friendships_friend_id_fkey(id, username, avatar_url)')
       .eq('user_id', userId)
     if (data) setFriends(data.map((d: any) => d.profiles))
   }
@@ -179,6 +179,17 @@ export default function ChatPage() {
     })
   }
 
+  const Avatar = ({ user, size = 'md' }: { user: any; size?: 'sm' | 'md' }) => {
+    const s = size === 'sm' ? 'w-9 h-9 text-sm' : 'w-12 h-12 text-lg'
+    return user.avatar_url ? (
+      <img src={user.avatar_url} alt="" className={`${s} rounded-full object-cover flex-shrink-0`} />
+    ) : (
+      <div className={`${s} rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold flex-shrink-0`}>
+        {user.username[0].toUpperCase()}
+      </div>
+    )
+  }
+
   // トーク一覧
   if (!selectedFriend) {
     return (
@@ -186,6 +197,12 @@ export default function ChatPage() {
         <div className="bg-white px-4 pt-[env(safe-area-inset-top,16px)] pb-4 flex justify-between items-center border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">トーク</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigateTo(router, '/chat/profile')}
+              className="text-sm text-gray-500 border border-gray-200 rounded-full px-3 py-1"
+            >
+              設定
+            </button>
             <button
               onClick={() => navigateTo(router, '/chat/add-friend')}
               className="text-sm text-gray-500 border border-gray-200 rounded-full px-3 py-1"
@@ -214,9 +231,7 @@ export default function ChatPage() {
                   onClick={() => setSelectedFriend(f)}
                   className="w-full bg-white px-4 py-4 flex items-center gap-3 border-b border-gray-100 active:bg-gray-50"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-lg flex-shrink-0">
-                    {f.username[0].toUpperCase()}
-                  </div>
+                  <Avatar user={f} />
                   <span className="font-medium text-gray-900">{f.username}</span>
                 </button>
               ))}
@@ -237,9 +252,7 @@ export default function ChatPage() {
         >
           ‹
         </button>
-        <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-          {selectedFriend.username[0].toUpperCase()}
-        </div>
+        <Avatar user={selectedFriend} size="sm" />
         <span className="font-medium text-gray-900">{selectedFriend.username}</span>
       </div>
 
