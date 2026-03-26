@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { navigateTo } from '@/lib/navigate'
 
-const IMAGE_EXPIRE_SECONDS = 30
+const IMAGE_EXPIRE_SECONDS = 86400 // 24時間
 
 export default function ChatPage() {
   const [session, setSession] = useState<any>(null)
@@ -57,34 +57,6 @@ export default function ChatPage() {
       vv.removeEventListener('scroll', update)
     }
   }, [selectedFriend])
-
-  // 期限切れ画像の自動更新タイマー
-  useEffect(() => {
-    if (messages.length === 0) return
-    const activeMessages = messages.filter(m => !isExpired(m))
-    if (activeMessages.length === 0) return
-
-    const nextExpiry = Math.min(
-      ...activeMessages.map(m => new Date(m.expires_at).getTime() - Date.now())
-    )
-    if (nextExpiry <= 0) {
-      setMessages(prev => [...prev])
-      return
-    }
-
-    const timer = setTimeout(() => {
-      setMessages(prev => [...prev]) // 再レンダーで期限切れ判定を更新
-
-      // 期限切れ画像をStorageから削除
-      messages.forEach(async (msg) => {
-        if (isExpired(msg) && msg.storage_path) {
-          await supabase.storage.from('chat-images').remove([msg.storage_path])
-        }
-      })
-    }, nextExpiry + 100)
-
-    return () => clearTimeout(timer)
-  }, [messages])
 
   const fetchFriends = async (userId: string) => {
     const { data } = await supabase
