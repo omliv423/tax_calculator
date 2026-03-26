@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import PwaRedirect from "./PwaRedirect";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +27,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (window.location.pathname !== '/' && !sessionStorage.getItem('navigating')) {
+                window.location.replace('/');
+              }
+              sessionStorage.removeItem('navigating');
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        <PwaRedirect />
         {children}
       </body>
     </html>

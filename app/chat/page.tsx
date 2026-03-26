@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { navigateTo } from '@/lib/navigate'
 
 const IMAGE_EXPIRE_SECONDS = 10
 
@@ -18,7 +19,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { router.push('/auth'); return }
+      if (!session) { navigateTo(router, '/auth'); return }
       setSession(session)
       fetchFriends(session.user.id)
     })
@@ -107,13 +108,13 @@ export default function ChatPage() {
           <h2 className="text-lg font-bold text-gray-900">トーク</h2>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => router.push('/chat/add-friend')}
+              onClick={() => navigateTo(router, '/chat/add-friend')}
               className="text-sm text-gray-500 border border-gray-200 rounded-full px-3 py-1"
             >
               ＋ 追加
             </button>
             <button
-              onClick={() => supabase.auth.signOut().then(() => router.push('/auth'))}
+              onClick={() => supabase.auth.signOut().then(() => navigateTo(router, '/auth'))}
               className="text-sm text-gray-400"
             >
               ログアウト

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { navigateTo } from '@/lib/navigate'
 
 export default function AuthPage() {
   const [email, setEmail] = useState('')
@@ -27,11 +28,11 @@ export default function AuthPage() {
           username,
         })
       }
-      router.push('/chat')
+      navigateTo(router, '/chat')
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError('メールアドレスまたはパスワードが違います'); setLoading(false); return }
-      router.push('/chat')
+      navigateTo(router, '/chat')
     }
     setLoading(false)
   }

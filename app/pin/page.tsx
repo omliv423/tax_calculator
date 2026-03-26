@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { navigateTo } from '@/lib/navigate'
 
 const CORRECT_PIN = '1234' // ← あとで好きな数字に変えてください
 
@@ -18,7 +19,7 @@ export default function PinPage() {
 
     if (newPin.length === 4) {
       if (newPin === CORRECT_PIN) {
-        router.push('/auth')
+        navigateTo(router, '/auth')
       } else {
         setTimeout(() => {
           setPin('')

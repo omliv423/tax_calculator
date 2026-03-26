@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { navigateTo } from '@/lib/navigate'
 
 export default function Home() {
   const [income, setIncome] = useState('')
@@ -49,7 +50,7 @@ export default function Home() {
 
     if (tapCount.current >= 5) {
       tapCount.current = 0
-      router.push('/pin')
+      navigateTo(router, '/pin')
       return
     }
 

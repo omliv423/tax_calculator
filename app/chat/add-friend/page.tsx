@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { navigateTo } from '@/lib/navigate'
 
 export default function AddFriendPage() {
   const [session, setSession] = useState<any>(null)
@@ -14,7 +15,7 @@ export default function AddFriendPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { router.push('/auth'); return }
+      if (!session) { navigateTo(router, '/auth'); return }
       setSession(session)
     })
   }, [])
@@ -60,7 +61,7 @@ export default function AddFriendPage() {
       {/* ヘッダー */}
       <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100">
         <button
-          onClick={() => router.push('/chat')}
+          onClick={() => navigateTo(router, '/chat')}
           className="text-gray-400 text-xl w-8"
         >
           ‹
