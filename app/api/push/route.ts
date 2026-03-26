@@ -37,12 +37,14 @@ export async function POST(req: NextRequest) {
       body: '最新の税制情報で手取りをチェック',
     })
 
+    const results = []
     for (const sub of subscriptions) {
       try {
-        await webpush.sendNotification(sub.subscription, payload)
+        const result = await webpush.sendNotification(sub.subscription, payload)
+        results.push({ status: result.statusCode, ok: true })
       } catch (e: any) {
+        results.push({ status: e.statusCode, message: e.body || e.message, ok: false })
         if (e.statusCode === 410) {
-          // 購読が無効になった場合は削除
           await supabase
             .from('push_subscriptions')
             .delete()
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ message: 'Sent' })
+    return NextResponse.json({ message: 'Sent', results })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
