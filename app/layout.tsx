@@ -31,12 +31,22 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if (window.location.pathname !== '/') {
-                var t = Number(sessionStorage.getItem('nav_time') || 0);
-                if (Date.now() - t > 3000) {
-                  window.location.replace('/');
+              (function() {
+                function shouldRedirect() {
+                  if (window.location.pathname === '/') return false;
+                  var t = Number(sessionStorage.getItem('nav_time') || 0);
+                  return Date.now() - t > 3000;
                 }
-              }
+                if (shouldRedirect()) window.location.replace('/');
+                window.addEventListener('pageshow', function(e) {
+                  if (e.persisted && shouldRedirect()) window.location.replace('/');
+                });
+                document.addEventListener('visibilitychange', function() {
+                  if (document.visibilityState === 'visible' && shouldRedirect()) {
+                    window.location.replace('/');
+                  }
+                });
+              })();
             `,
           }}
         />
