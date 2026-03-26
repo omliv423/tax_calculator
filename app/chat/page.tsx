@@ -27,9 +27,27 @@ export default function ChatPage() {
     })
   }, [])
 
+  const [viewHeight, setViewHeight] = useState<number | null>(null)
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // iOSキーボード対応: visualViewportでレイアウトを調整
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const handleResize = () => {
+      setViewHeight(vv.height)
+    }
+    vv.addEventListener('resize', handleResize)
+    vv.addEventListener('scroll', handleResize)
+    handleResize()
+    return () => {
+      vv.removeEventListener('resize', handleResize)
+      vv.removeEventListener('scroll', handleResize)
+    }
+  }, [selectedFriend])
 
   // 期限切れ画像の自動更新タイマー
   useEffect(() => {
@@ -230,7 +248,10 @@ export default function ChatPage() {
 
   // チャット画面
   return (
-    <main className="flex flex-col bg-gray-50" style={{ height: '100dvh' }}>
+    <main
+      className="flex flex-col bg-gray-50 fixed inset-x-0 top-0"
+      style={{ height: viewHeight ? `${viewHeight}px` : '100dvh' }}
+    >
       <div className="bg-white px-4 py-3 flex items-center gap-3 border-b border-gray-100 flex-shrink-0">
         <button
           onClick={() => setSelectedFriend(null)}
