@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [uploading, setUploading] = useState(false)
   const [text, setText] = useState('')
   const [error, setError] = useState('')
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -268,7 +269,8 @@ export default function ChatPage() {
                 <img
                   src={msg.image_url}
                   alt="画像"
-                  className="max-w-[70vw] max-h-72 rounded-2xl object-cover shadow-sm"
+                  onClick={() => setZoomedImage(msg.image_url)}
+                  className="max-w-[70vw] max-h-72 rounded-2xl object-cover shadow-sm cursor-pointer active:opacity-80"
                 />
               )
             ) : msg.text ? (
@@ -357,6 +359,19 @@ export default function ChatPage() {
           <p className="text-xs text-gray-400 text-center mt-1">画像を送信中...</p>
         )}
       </div>
+
+      {zoomedImage && (
+        <div
+          onClick={() => setZoomedImage(null)}
+          className="absolute inset-0 bg-black/80 flex items-center justify-center z-50"
+        >
+          <img
+            src={zoomedImage}
+            alt="拡大画像"
+            className="max-w-[95vw] max-h-[85vh] object-contain rounded-lg"
+          />
+        </div>
+      )}
     </main>
   )
 }
