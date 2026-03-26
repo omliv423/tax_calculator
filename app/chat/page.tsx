@@ -136,16 +136,18 @@ export default function ChatPage() {
 
     const expiresAt = new Date(Date.now() + IMAGE_EXPIRE_SECONDS * 1000).toISOString()
 
-    const { error: insertError } = await supabase.from('messages').insert({
+    const { data: newMsg, error: insertError } = await supabase.from('messages').insert({
       sender_id: session.user.id,
       receiver_id: selectedFriend.id,
       image_url: signedData.signedUrl,
       storage_path: filename,
       expires_at: expiresAt,
-    })
+    }).select().single()
 
     if (insertError) {
       setError('メッセージの保存に失敗しました')
+    } else if (newMsg) {
+      setMessages((prev) => [...prev, newMsg])
     }
 
     setUploading(false)
@@ -155,13 +157,15 @@ export default function ChatPage() {
   const handleSendText = async () => {
     if (!text.trim() || !selectedFriend) return
     setError('')
-    const { error: insertError } = await supabase.from('messages').insert({
+    const { data: newMsg, error: insertError } = await supabase.from('messages').insert({
       sender_id: session.user.id,
       receiver_id: selectedFriend.id,
       text: text.trim(),
-    })
+    }).select().single()
     if (insertError) {
       setError('メッセージの送信に失敗しました')
+    } else if (newMsg) {
+      setMessages((prev) => [...prev, newMsg])
     }
     setText('')
   }
